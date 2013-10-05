@@ -15,7 +15,7 @@ define(
 		{
 		    text: "Бить мечем беса",
 		    request: function(){
-			return (!game.hasKill("bes1") && (game.findItem("sword") >= 0) );
+			return (!game.hasKills("bes1") && (game.findItem("sword") >= 0) );
 		    },
 		    select: "enter:ship_win"
 		},

@@ -7,6 +7,6 @@ requirejs.config({
 require(
     ["jquery", "jquery.mobile", "game", "quest/main"],
     function( $, mobile, game ){
-        game.start();
+        game.load();
     }
 );
