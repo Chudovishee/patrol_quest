@@ -141,7 +141,7 @@ define("game", ["jquery"], function( $ ){ return {
     //inventory
     findItem: function(tag){
 	for(var i = 0; i < this.inventory.length; i++){
-	    if(tag === this.inventory[i].tag)
+	    if(tag === this.inventory[i].item.name)
 		return i;
 	}
 	return -1;
@@ -152,24 +152,24 @@ define("game", ["jquery"], function( $ ){ return {
 	}
 	if(this.items[tag].stackable){
 	    var i = this.findItem(tag);
-	    if(i >=0 ){
-		this.inventory[i].count+= count;
+	    if(i >= 0 ){
+		this.inventory[i].count += count;
 	    }
 	    else{
 		this.inventory.push({
-		    tag: tag,
+		    item: this.items[tag],
 		    count: count
 		});
 	    }
 	}
 	else{
 	    this.inventory.push({
-		tag: tag,
+		item: this.items[tag],
 		count: 1
 	    });
 	}
 	this.pickupQueue.push({
-	    tag: tag,
+	    item: this.items[tag],
 	    count: count
 	});
     },
@@ -190,8 +190,7 @@ define("game", ["jquery"], function( $ ){ return {
 	return false;
     },
 
-    displayItem: function(tag, count){
-	var item = this.items[tag];
+    displayItem: function(item, count){
 	return "<div class=\"item\"><span class=\"item-icon " + item.icon + "\"/>" + item.name + "</div>";
     },
     
@@ -200,7 +199,7 @@ define("game", ["jquery"], function( $ ){ return {
 	    this.content.append("<br/>Вы нашли:");
 	}
 	for(var i = 0; i < this.pickupQueue.length; i++){
-	    this.content.append( this.displayItem(this.pickupQueue[i].tag, this.pickupQueue[i].count) );
+	    this.content.append( this.displayItem(this.pickupQueue[i].item, this.pickupQueue[i].count) );
 	}
     },
     
