@@ -4,24 +4,24 @@ define("game", ["jquery"], function( $ ){ return {
     page: $("#page"),
        
     startRoom: false,
-    currentRoom: false,
-     items:[],
-     monsters:[],
+    startInventory:[],
+    items:[],
+    monsters:[],
     rooms: {},
+    defaultRoomData:{ entry:0 },
+    
+    currentRoom: false,
+    roomsData:{},
     inventory:[],
     
     pickupQueue:[],
     
-    
-    
+        
     //rooms
     addRoom: function(name, room){
 	var baseRoom = {
-	    page: "",
-	    enter: function(){},
-	    leave: function(){},
 	    dialog: [],
-	    entry: 0,
+	    data: false,
 	};
 	this.rooms[name] = $.extend(baseRoom, room);
     },
@@ -29,7 +29,14 @@ define("game", ["jquery"], function( $ ){ return {
     
     enterRoom: function(name){
 	var room = this.rooms[name];
-	room.entry++;
+	
+	//init data link
+	if( !room.data ){
+	    if( !this.roomsData[name] ) this.roomsData[name] = $.extend(true,{},this.defaultRoomData);
+	    room.data = this.roomsData[name];
+	}
+	
+	room.data.entry++;
 	this.currentRoom = name;
 	
 	
@@ -62,6 +69,10 @@ define("game", ["jquery"], function( $ ){ return {
 	$(window).scrollTop(0);
     },
     start: function(){
+	//reset and start new game
+	this.currentRoom = this.startRoom;
+	this.inventory = $.extend(true, [], this.startInventory);
+	this.roomsData = {};
 	this.enterRoom( this.startRoom );
     },
     
@@ -96,10 +107,10 @@ define("game", ["jquery"], function( $ ){ return {
 		    break;
 		case "entry":
 		    if(r[1] == "this"){
-			if(r[2] == room.entry) return true;
+			if(r[2] == room.data.entry) return true;
 		    }
 		    else if( this.rooms[r[1]] ){
-			if(r[2] == this.rooms[r[1]].entry) return true;
+			if(r[2] == this.rooms[r[1]].data.entry) return true;
 		    }
 		    break;
 	    }
