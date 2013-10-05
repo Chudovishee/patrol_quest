@@ -2,6 +2,7 @@ define(
     ["jquery", "game",
 	"quest/items",
         "quest/monsters",
+	"quest/battles",
 	"rooms/start",
 	"rooms/tower",
 	"rooms/wasteland",

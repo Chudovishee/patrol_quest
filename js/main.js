@@ -5,7 +5,7 @@ requirejs.config({
     }
 });
 require(
-    ["jquery", "jquery.mobile", "game", "quest/main"],
+    ["jquery", "jquery.mobile", "jquery.touchy.min", "game", "quest/main"],
     function( $, mobile, game ){
         game.start();
     }
