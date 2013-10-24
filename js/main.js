@@ -5,8 +5,13 @@ requirejs.config({
     }
 });
 require(
-    ["jquery", "jquery.mobile", "game", "quest/main"],
-    function( $, mobile, game ){
-        game.start();
+    ["jquery", "jquery.mobile", "game", "saves","quest/main"],
+    function( $, mobile, game, saves ){
+        document.addEventListener("deviceready", onDeviceReady, false);
+        function onDeviceReady() 
+        {
+            game.start();
+        };  
+        
     }
 );

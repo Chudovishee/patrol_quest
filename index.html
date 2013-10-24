@@ -1,17 +1,35 @@
 <!DOCTYPE html> 
 <html> 
 <head> 
-	<title>My Page</title> 
+	<title>Дозорный</title> 
 	<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
-	<meta name="viewport" content="width=device-width, initial-scale=1"> 
+	<meta name="viewport" content="width=device-width, initial-scale=1">
 	<link rel="stylesheet" href="css/jquery.mobile.css" />
 	<link rel="stylesheet" href="css/style.css" />
-
+	
 	<link rel="stylesheet" href="patrol_0/css/items.css" />
-
 	<script data-main="js/main" src="js/require.js"></script>
 
-
+    <script type="text/javascript" charset="utf-8" src="cordova.js"></script>
+    <!--<script type="text/javascript" charset="utf-8">
+        function onLoad() {
+            document.addEventListener("deviceready", onDeviceReady, false);
+            document.getElementById("content").innerText+="event listener added ";
+        }
+        function onDeviceReady() 
+        {
+            document.getElementById("content").innerText+="deviceReady ";
+            function gotFS(){
+                document.getElementById("content").innerText+="got FS ";
+            }
+            function fail(){
+                document.getElementById("content").innerText+="fail ";
+            }
+            window.requestFileSystem(LocalFileSystem.PERSISTENT, 0, gotFS, fail);
+            //saves.save();
+            //game.start();
+        };   
+    </script>-->
 </head> 
 <body> 
 
@@ -21,10 +39,7 @@
 	<h1>Дозорный</h1>
     </div> 
     
-
-    <div data-role="content" id="content"></div> 
-
+    <div data-role="content" id="content"></div>
 </div>
-
 </body>
 </html>
