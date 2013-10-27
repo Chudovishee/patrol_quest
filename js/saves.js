@@ -22,6 +22,7 @@ define("saves", ["jquery"], function( $ ){ return {
 			},
 			function(error){
 				self._fail(error);
+				self._fail = null;
 			});
 
 	},
@@ -33,7 +34,10 @@ define("saves", ["jquery"], function( $ ){ return {
         	function(fileEntry){
         		self._gotFileEntry(fileEntry, action, data);
         	},
-        	self._fail);
+			function(error){
+				self._fail(error);
+				self._fail = null;
+			});
     },
 	_gotFileEntry: function(fileEntry, action, data)
 	{
@@ -44,13 +48,21 @@ define("saves", ["jquery"], function( $ ){ return {
 				fileEntry.createWriter(
 					function(writer){
 						self._gotFileWriter(writer, data);
-					}, self._fail);
+					},
+					function(error){
+						self._fail(error);
+						self._fail = null;
+					});
 				break;
 			case "load":
 				fileEntry.file(
 					function(file){
 						self._gotFile(file);
-					}, self._fail);
+					},
+					function(error){
+						self._fail(error);
+						self._fail = null;
+					});
 				break;
 			default:
 				throw Error("saves module error: unsupported action type '" + action + "'");
@@ -61,7 +73,10 @@ define("saves", ["jquery"], function( $ ){ return {
     	var self = this;
         writer.onwriteend = function(evt) 
         {
-        	self._success(evt);
+        	if(self._success) {
+        		self._success(evt);
+        	    self._success = null;
+        	}
         }
     	writer.write(JSON.stringify(data));
 	},
@@ -70,7 +85,10 @@ define("saves", ["jquery"], function( $ ){ return {
 		var self = this;
         var reader = new FileReader();
         reader.onloadend = function(evt) {
-            self._success(JSON.parse(evt.target.result));
+        	if(self._success) {
+            	self._success(JSON.parse(evt.target.result));
+            	self._success = null;
+        	}
         };
         reader.readAsText(file);
     },
@@ -89,12 +107,8 @@ define("saves", ["jquery"], function( $ ){ return {
 
 		return this;
 	},
-	_success: function(){
-
-	},
-	_fail: function(error){
-
-	},
+	_success: null,
+	_fail: null,
 	success: function(callback)
 	{
 		if(typeof callback == "function")
