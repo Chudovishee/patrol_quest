@@ -12,6 +12,7 @@ define(
     ],
     function($, game){
 	game.startRoom = "start";
+	game.version = "patrol_0v0.1a";
 	return{};
     }
 );

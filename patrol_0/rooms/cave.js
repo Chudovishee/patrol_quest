@@ -51,6 +51,11 @@ define(
 		    text: "Использовать амулет",
 		    request: "item:amulet",
 		    select: "enter:cave_4"
+		},
+		{
+		    text: "Начать заново",
+		    request: "nitem:amulet",
+		    select: "startgame"
 		}
 	    ],
 	});
@@ -70,7 +75,13 @@ define(
 	game.addRoom("cave_5",{
 	    states: [{
 		text: "Когда вы выбрались из пещеры, солнце уже клонилось к закату. Самое время вернуться в Башню, чтобы немного отдохнуть , ведь завтра вас ждет новый тяжелый день в Пустошах. Это Дозор и иначе быть не может.<center>Конец</center>",
-	    }]
+	    }],
+	    dialog:[
+		{
+		    text: "Начать заново",
+		    select: "startgame"
+		}
+	    ]
 	});
 	
     }

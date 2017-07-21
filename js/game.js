@@ -1,35 +1,117 @@
-define("game", ["jquery"], function( $ ){ return {
+define("game", ["jquery", "jquery.cookie"], function( $ ){ return {
+    version: "game_base",
+    
     
     content: $("#content"),
     page: $("#page"),
        
     startRoom: false,
-    currentRoom: false,
-     items:[],
-     monsters:[],
+    startInventory:[],
+    items:{},
+    monsters:{},
     rooms: {},
+    
+    currentRoom: false,
+    activeRooms:{},
+    activeMonsters:{},
     inventory:[],
     
     pickupQueue:[],
     
     
     
+    //start reset load save
+    reset: function(){
+	this.currentRoom = this.startRoom;
+	this.inventory = $.extend(true, [], this.startInventory);
+	this.activeRooms = $.extend(true, {}, this.rooms);
+	this.activeMonsters = $.extend(true, {}, this.monsters);
+    },
+    start: function(){
+	//reset and start new game
+	this.reset();
+	this.enterRoom( this.startRoom );
+    },
+    
+    save: function(){
+	var data = JSON.stringify({
+	    version: this.version,
+	    currentRoom: this.currentRoom,
+	    activeRooms: this.activeRooms,
+	    activeMonsters: this.activeMonsters,
+	    inventory: this.inventory,
+	    pickupQueue: this.pickupQueue
+	});
+	$.cookie("test", data);
+    },
+    load: function(){
+	var data = JSON.parse( $.cookie("test") );
+	if( data && (data.version == this.version) ){
+	    this.reset();
+	    
+	    this.currentRoom = data.currentRoom;
+	    
+	    $.extend(true, this.activeRooms, data.activeRooms);
+	    $.extend(true, this.activeMonsters, data.activeMonsters);
+	    
+	    for(var i = 0; i < data.inventory.length; i++){
+		var item = this.items[ data.inventory[i].item ];
+		if(item){
+		    this.inventory.push({
+			item: item,
+			count: data.inventory[i].count
+		    });
+		}
+	    }
+	    for(var i = 0; i < data.pickupQueue.length; i++){
+		var item = this.items[ data.pickupQueue[i].item ];
+		if(item){
+		    this.pickupQueue.push({
+			item: item,
+			count: data.pickupQueue[i].count
+		    });
+		}
+	    }
+	    this.enterRoom( this.currentRoom, true );
+	}
+	else{
+	    this.start();
+	}
+    },
+    
+        
     //rooms
     addRoom: function(name, room){
 	var baseRoom = {
-	    page: "",
-	    enter: function(){},
-	    leave: function(){},
 	    dialog: [],
+	    states:[],
 	    entry: 0,
+	    toJSON: function(){
+		var replacement = {};
+		for (var val in this){
+		    switch(val){
+			case "dialog":
+			case "states":
+			    break;
+			default:
+			    replacement[val] = this[val];
+			    break;
+		    }
+		}
+		return replacement;
+	    }
 	};
 	this.rooms[name] = $.extend(baseRoom, room);
     },
+    
 	
     
-    enterRoom: function(name){
-	var room = this.rooms[name];
-	room.entry++;
+    enterRoom: function(name, isLoad){
+	var room = this.activeRooms[name];
+	
+	if(!isLoad){
+	    room.entry++;
+	}
 	this.currentRoom = name;
 	
 	
@@ -37,15 +119,21 @@ define("game", ["jquery"], function( $ ){ return {
 	    if( this.checkRequest(room.states[i].request, room) ){
 		
 		this.content.html( room.states[i].text );
-		if(typeof room.states[i].enter == "function")
+		if( !isLoad && typeof room.states[i].enter == "function"){
 		    room.states[i].enter();
+		}
 		
 		break;
 	    }
 	}
-	this.displayPickup();
-	this.pickupQueue = [];
 	
+	
+	//save game stage
+	if(!isLoad){
+	    this.save();
+	}
+	
+	this.displayPickup();
 	
 	
 	this.content.append(this.dialog = $('<div data-role="controlgroup"></div>'));
@@ -60,10 +148,9 @@ define("game", ["jquery"], function( $ ){ return {
     
 	this.page.trigger( "create" );
 	$(window).scrollTop(0);
+	
     },
-    start: function(){
-	this.enterRoom( this.startRoom );
-    },
+
     
     
     //
@@ -89,17 +176,17 @@ define("game", ["jquery"], function( $ ){ return {
 		    if( this.findItem(r[1]) == -1 ) return true;
 		    break;
 		case "kill":
-		    if( this.hasKill(r[1]) ) return true;
+		    if( this.hasKills(r[1]) ) return true;
 		    break;
 		case "nkill":
-		    if( !this.hasKill(r[1]) ) return true;
+		    if( !this.hasKills(r[1]) ) return true;
 		    break;
 		case "entry":
 		    if(r[1] == "this"){
 			if(r[2] == room.entry) return true;
 		    }
-		    else if( this.rooms[r[1]] ){
-			if(r[2] == this.rooms[r[1]].entry) return true;
+		    else if( this.activeRooms[r[1]] ){
+			if(r[2] == this.activeRooms[r[1]].entry) return true;
 		    }
 		    break;
 	    }
@@ -121,6 +208,9 @@ define("game", ["jquery"], function( $ ){ return {
 		    self.removeItem(s[1]);
 		    return self.enterRoom(s[2]);
 		    break;
+		case "startgame":
+		    self.start();
+		    break;
 	    }
 	}
 	return false;
@@ -128,9 +218,29 @@ define("game", ["jquery"], function( $ ){ return {
     
     
     //inventory
+    
+    addItem: function(data){
+	var base = {
+	    tag: "base_tag",
+	    name:"Предмет",
+	    description: "",
+	    stackable: false,
+	    toJSON: function(){
+		return this.tag;
+	    }
+	};
+	$.extend(base, data);
+	this.items[base.tag] = base;
+    },
+    addItems: function(data){
+	for(var i = 0; i < data.length; i++){
+	    this.addItem(data[i]);
+	}
+    },
+    
     findItem: function(tag){
 	for(var i = 0; i < this.inventory.length; i++){
-	    if(tag === this.inventory[i].tag)
+	    if(tag === this.inventory[i].item.tag)
 		return i;
 	}
 	return -1;
@@ -141,24 +251,24 @@ define("game", ["jquery"], function( $ ){ return {
 	}
 	if(this.items[tag].stackable){
 	    var i = this.findItem(tag);
-	    if(i >=0 ){
-		this.inventory[i].count+= count;
+	    if(i >= 0 ){
+		this.inventory[i].count += count;
 	    }
 	    else{
 		this.inventory.push({
-		    tag: tag,
+		    item: this.items[tag],
 		    count: count
 		});
 	    }
 	}
 	else{
 	    this.inventory.push({
-		tag: tag,
+		item: this.items[tag],
 		count: 1
 	    });
 	}
 	this.pickupQueue.push({
-	    tag: tag,
+	    item: this.items[tag],
 	    count: count
 	});
     },
@@ -171,7 +281,7 @@ define("game", ["jquery"], function( $ ){ return {
 	    if( this.inventory[f].count >= count ){
 		this.inventory[f].count -= count;
 		if(this.inventory[f].count == 0){
-		    this.inventory[f] = false;
+		    this.inventory.splice(f,1);
 		}
 		return true;
 	    }
@@ -179,8 +289,7 @@ define("game", ["jquery"], function( $ ){ return {
 	return false;
     },
 
-    displayItem: function(tag, count){
-	var item = this.items[tag];
+    displayItem: function(item, count){
 	return "<div class=\"item\"><span class=\"item-icon " + item.icon + "\"/>" + item.name + "</div>";
     },
     
@@ -189,16 +298,50 @@ define("game", ["jquery"], function( $ ){ return {
 	    this.content.append("<br/>Вы нашли:");
 	}
 	for(var i = 0; i < this.pickupQueue.length; i++){
-	    this.content.append( this.displayItem(this.pickupQueue[i].tag, this.pickupQueue[i].count) );
+	    this.content.append( this.displayItem(this.pickupQueue[i].item, this.pickupQueue[i].count) );
 	}
+	this.pickupQueue = [];
     },
     
       //monsters
-    kill: function(tag){
-	this.monsters[tag].kill++;
+    
+    addMonster: function(data){
+	var base = {
+	    tag: "base_tag",
+	    name:"Монстр",
+	    description: "",
+	    kills: 0,
+	    losses: 0,
+	    toJSON: function(){
+		var replacement = {};
+		for (var val in this){
+		    switch(val){
+			case "tag":
+			case "name":
+			case "description":
+			    break;
+			default:
+			    replacement[val] = this[val];
+			    break;
+		    }
+		}
+		return replacement;
+	    }
+	};
+	$.extend(base, data);
+	this.monsters[base.tag] = base;
     },
-    hasKill: function(tag){
-	if( this.monsters[tag].kill > 0 ) return true;
+    addMonsters: function(data){
+	for(var i = 0; i < data.length; i++){
+	    this.addMonster(data[i]);
+	}
+    },
+    
+    kill: function(tag){
+	this.activeMonsters[tag].kills++;
+    },
+    hasKills: function(tag){
+	if( this.activeMonsters[tag].kills > 0 ) return true;
 	return false;
     },
     
